@@ -5,6 +5,11 @@ import matplotlib.pyplot as plt
 
 from raytracer._utils.decorators import SaveOutput
 
+from raytracer.elements import SphericalRefraction
+
+from raytracer.rays import Ray
+
+import numpy as np
 
 def task8():
     """
@@ -15,6 +20,13 @@ def task8():
     to check that the correct values are appended to your Ray object.
     """
 
+    ray = Ray(np.array([0, 0, 0]), np.array([0, 0, 1]))
+
+    aperature = SphericalRefraction(0, 0, 0., 0., 0.)
+
+    new_ray = aperature.propagate_ray(ray)
+
+    return new_ray
 
 @SaveOutput("task10")
 def task10():
