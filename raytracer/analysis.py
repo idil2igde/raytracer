@@ -9,6 +9,8 @@ from raytracer.elements import SphericalRefraction
 
 from raytracer.rays import Ray
 
+from raytracer.elements import OutputPlane
+
 import numpy as np
 
 def task8():
@@ -22,7 +24,7 @@ def task8():
 
     ray = Ray(np.array([0, 0, 0]), np.array([0, 0, 1]))
 
-    aperature = SphericalRefraction(20, 5, 10, 1, 1.5)
+    aperature = SphericalRefraction(20, 5, 10, 1, 1.5) 
 
     new_ray = aperature.propagate_ray(ray)
     print("final pos:", ray.pos())
@@ -44,7 +46,23 @@ def task10():
     Returns:
         Figure: the ray path plot.
     """
-    return
+    ray = Ray(np.array([0, 0, 0]), np.array([0, 0, 1]))
+
+    surface = SphericalRefraction(100, 34, 0.03, 1, 1.5) #given values in the task
+
+    screen = OutputPlane(250)
+
+    surface.propagate_ray(ray)
+    screen.propagate_ray(ray)
+
+    vertices = ray.vertices() #tracing the travel of the ray
+
+    z = [point[2] for point in vertices] #plot z-direction the direction of ray travel on x-axis in the plot
+    y = [point[1] for point in vertices]
+
+    plt.plot(z, y)
+    plt.xlabel("Ray travelling in z-direction")
+    plt.ylabel("y-direction")
 
 
 @SaveOutput("task11", plot_output_indices=itemgetter(0))
@@ -226,10 +244,10 @@ def task20():
 if __name__ == "__main__":
 
     # Run task 8 function
-    task8()
+    #task8()
 
     # Run task 10 function
-    # FIG10 = task10()
+    FIG10 = task10()
 
     # Run task 11 function
     # FIG11, FOCAL_POINT = task11()

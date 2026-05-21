@@ -1,4 +1,6 @@
 import numpy as np
+from raytracer.elements import OpticalElement
+
 class Ray:
     def __init__(self, pos = np.array([0, 0, 0]), direc = np.array([0, 0, 1])):
         self.__pos = pos #the current position of the ray / a point in space
@@ -22,3 +24,15 @@ class Ray:
     def __repr__(self):
         #to return ray object in string form to make it more comprehensible
         return f"Ray(pos={self.__pos}, direc={self.__direc})"
+    
+class RayBundle(Ray):
+    def __init__(self, rmax = 5., nrings = 5., multi = 6):
+        self.__rmax = rmax
+        self.__nrings = nrings
+        self.__multi = multi
+    def propagate_bundle(self, elements = []): #elements is a list of OpticalElements objects
+        ray = Ray()
+        OpticalElement.__init__(elements)
+        for i in elements:
+         #propagate each ray through the list of elements
+

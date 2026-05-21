@@ -38,31 +38,47 @@ class SphericalRefraction(OpticalElement):
         def intercept(self, ray):
                 direc = ray.direc()
                 pos = ray.pos()
-                rad = self.curvature()
-                dot_1 = np.dot(pos, direc)
-                disc = dot_1 * dot_1 - (np.dot(pos, pos) - rad * rad)
+                curv = self.curvature()
+                rad = 1 / curv #since the unit of curvature is mm-1, radius is inverse
+                z0 = self.z_0()
+                centre = np.array([0, 0, z0 + rad]) #centre of sphere is calculated by adding where surface crosses the z-axis and the radius of the sphere
+                r = pos - centre #position of ray relative to the sphere centre
+                dot_1 = np.dot(r, direc)
+                disc = dot_1 * dot_1 - (np.dot(r, r) - rad * rad)
                 if disc < 0:
                         return None #no real solutions to quad formula exists for negative discriminant
                 l1 = - dot_1 + np.sqrt(disc)
                 l2 = - dot_1 - np.sqrt(disc)
-                intercept_pos = pos + min(l1, l2) * direc #ray only travels forward, adding intercept distance to initial ray position in ray direction
-                #we should check both roots and find out the smallest positive root
+                valid = [l for l in [l1, l2] if l > 0] #choosing positive root 
+                if len(valid) == 0:
+                        return None #if both roots are not valid
+                l = min(valid) #smallest possible positive root gives the first instance of intercept
+                intercept_pos = pos + l * direc #ray only travels forward, adding intercept distance to initial ray position in ray direction
+
                 return intercept_pos
         
         def propagate_ray(self, ray):
                 direc = ray.direc()
                 n_1 = self.n_1()
                 n_2 = self.n_2()
+                curv = self.curvature()
+                rad = 1 / curv 
+                z0 = self.z_0()
+                centre = np.array([0, 0, z0 + rad])
                 new_pos = self.intercept(ray)
                 if new_pos is None:
                         return None
-                normal = new_pos / np.linalg.norm(new_pos) #normal to a spherical surface
+                normal = new_pos - centre #normal to a spherical surface
+                normal = normal / np.linalg.norm(normal) #finding direction
                 new_direc = refract(direc, normal, n_1, n_2)
                 if new_direc is None:
                         return None
                 ray.append(new_pos, new_direc)
                 return ray
         
+        def focal_point(self): #calculating the focal point of a refracting spherical surface
+                return self
+
 class OutputPlane(OpticalElement):
         def __init__(self, z_0):
                 self.__z0 = z_0
