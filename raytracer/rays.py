@@ -19,4 +19,6 @@ class Ray:
     def vertices(self):
         #returning all the points along the ray as a list
         return self.__vertices
-        
+    def __repr__(self):
+        #to return ray object in string form to make it more comprehensible
+        return f"Ray(pos={self.__pos}, direc={self.__direc})"

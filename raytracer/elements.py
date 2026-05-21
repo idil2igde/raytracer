@@ -41,23 +41,52 @@ class SphericalRefraction(OpticalElement):
                 rad = self.curvature()
                 dot_1 = np.dot(pos, direc)
                 disc = dot_1 * dot_1 - (np.dot(pos, pos) - rad * rad)
-                l1 = - dot_1 + np.sqrt(disc)
-                l2 = - dot_1 - np.sqrt(disc)
                 if disc < 0:
                         return None #no real solutions to quad formula exists for negative discriminant
-                intercept_pos = pos + l1 * direc #ray only travels forward, adding intercept distance to initial ray position in ray direction
+                l1 = - dot_1 + np.sqrt(disc)
+                l2 = - dot_1 - np.sqrt(disc)
+                intercept_pos = pos + min(l1, l2) * direc #ray only travels forward, adding intercept distance to initial ray position in ray direction
+                #we should check both roots and find out the smallest positive root
                 return intercept_pos
         
         def propagate_ray(self, ray):
                 direc = ray.direc()
-                normal = np.array([0, 0, 1]) #normal to a spherical surface
                 n_1 = self.n_1()
                 n_2 = self.n_2()
                 new_pos = self.intercept(ray)
+                if new_pos is None:
+                        return None
+                normal = new_pos / np.linalg.norm(new_pos) #normal to a spherical surface
                 new_direc = refract(direc, normal, n_1, n_2)
                 if new_direc is None:
                         return None
-                if new_pos is None:
-                        return None
                 ray.append(new_pos, new_direc)
+                return ray
+        
+class OutputPlane(OpticalElement):
+        def __init__(self, z_0):
+                self.__z0 = z_0
+        
+        def intercept(self, ray):
+                z_0 = self.__z0 #where the plane is in z-direction
+                z_init = ray.pos()[2]
+                z_direc = ray.direc()[2]
+                if z_direc == 0: #if the ray is moving parallel to the plane
+                        return None
+                l = (z_0 - z_init) / z_direc
+                if l < 0: # if the surface is behind the ray
+                        return None
+                direc = ray.direc()
+                pos = ray.pos()
+                intercept_pos = pos + l * direc
+                return intercept_pos
+        
+        def propagate_ray(self, ray):
+                new_pos = self.intercept(ray)
+                direc = ray.direc()
+                if new_pos is None :
+                        return None
+                ray.append(new_pos, direc) #keeping the direction of the ray same
+                return ray
+
 

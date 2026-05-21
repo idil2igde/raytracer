@@ -22,11 +22,14 @@ def task8():
 
     ray = Ray(np.array([0, 0, 0]), np.array([0, 0, 1]))
 
-    aperature = SphericalRefraction(0, 0, 0., 0., 0.)
+    aperature = SphericalRefraction(20, 5, 10, 1, 1.5)
 
     new_ray = aperature.propagate_ray(ray)
-
-    return new_ray
+    print("final pos:", ray.pos())
+    print("final direc:", ray.direc())
+    print("vertices:", ray.vertices())
+    print("propagated ray:", repr(new_ray))
+    print(new_ray)
 
 @SaveOutput("task10")
 def task10():
