@@ -77,7 +77,12 @@ class SphericalRefraction(OpticalElement):
                 return ray
         
         def focal_point(self): #calculating the focal point of a refracting spherical surface
-                return self
+                n1 = self.n_1()
+                n2 = self.n_2()
+                rad = 1 / self.curvature()
+                focal_point = n2 * rad / (n2 - n1) #paraxial focus of a single spherical refracting surface
+                z0 = self.z_0()
+                return focal_point + z0
 
 class OutputPlane(OpticalElement):
         def __init__(self, z_0):

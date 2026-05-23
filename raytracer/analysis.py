@@ -11,6 +11,8 @@ from raytracer.rays import Ray
 
 from raytracer.elements import OutputPlane
 
+from raytracer.rays import RayBundle
+
 import numpy as np
 
 def task8():
@@ -79,6 +81,28 @@ def task11():
     Returns:
         tuple[Figure, float]: the ray path plot and the focal point
     """
+    ray_1 = Ray(np.array([0.1, 0.1, 0]), np.array([0, 0, 1]))
+
+    ray_2 = Ray(np.array([0, 0, 0]), np.array([0, 0, 1]))
+
+    ray_3 = Ray(np.array([-0.1, -0.1, 0]), np.array([0, 0, 1]))
+
+    rays = [ray_1, ray_2, ray_3]
+
+    surface = SphericalRefraction(100, 34, 0.03, 1, 1.5) #given values in the task
+
+    screen = OutputPlane(250)
+
+    for i in rays:
+        surface.propagate_ray(i)
+        screen.propagate_ray(i)
+        vertices = i.vertices()
+        z = [point[2] for point in vertices] #plot z-direction the direction of ray travel on x-axis in the plot
+        y = [point[1] for point in vertices]
+        plt.plot(z, y)
+        print(surface.focal_point())
+        #NEEDS TO RETURN TUPLE!!
+
     return
 
 
@@ -94,7 +118,17 @@ def task12():
     Returns:
         Figure: the track plot.
     """
-    return
+
+    rb = RayBundle()
+    rb = RayBundle(rmax=5., nrings=5., multi=6)
+
+    surface = SphericalRefraction(100, 34, 0.03, 1, 1.5)
+    screen = OutputPlane(250)
+
+    rb.propagate_bundle([surface, screen]) #the refracting elements are surface and the screen
+
+    return rb.track_plot()
+
 
 
 @SaveOutput("task13", plot_output_indices=itemgetter(0))
@@ -111,7 +145,21 @@ def task13():
     Returns:
         tuple[Figure, float]: the spot plot and rms
     """
-    return
+
+    rb = RayBundle()
+    rb = RayBundle(rmax=5., nrings=5., multi=6)
+
+    surface = SphericalRefraction(100, 34, 0.03, 1, 1.5)
+
+    focal_point = surface.focal_point()
+
+    screen = OutputPlane(focal_point) #screen placed at the focal point
+
+    rb.propagate_bundle([surface, screen])
+
+    rms_point = rb.rms()
+    
+    return rb.spot_plot(), rms_point
 
 
 @SaveOutput("task14", plot_output_indices=itemgetter(0))
@@ -129,7 +177,39 @@ def task14():
     Returns:
         tuple[Figure, float, float]: the plot, the simulation RMS value, the diffraction scale.
     """
-    return
+    radii = []
+    rms_values = []
+    diff_values = []
+    rms_2_5 = 0
+    diff_2_5 = 0
+    for i in np.linspace(0.1, 10., 240): #240 chosen so we get a value in one of the steps close to 2.5 mm
+        rb = RayBundle(rmax=i, nrings=5., multi=6) #max radius 10 and min 0.1 milimeters
+        surface = SphericalRefraction(100, 34, 0.03, 1, 1.5)
+        focal_point = surface.focal_point()
+        screen = OutputPlane(focal_point) #screen placed at the focal point
+        rb.propagate_bundle([surface, screen])
+        rms_point = rb.rms()
+        radii.append(i)
+        rms_values.append(rms_point)
+        
+        wavelength = 588e-6 #in milimeters
+        aperature = 2 * i #diameter of the refracting surface
+        del_x = wavelength * focal_point / aperature
+        diff_values.append(del_x)
+
+        if np.isclose(i, 2.5):
+            rms_2_5 = rb.rms()
+            diff_2_5 = del_x
+    
+    plt.plot(radii, rms_values, label ="RMS value")
+    plt.plot(radii, diff_values, label = "Diffraction scale")
+    plt.xlabel("Input beam radius (mm)")
+    plt.ylabel("Spot size (mm)")
+    
+    plt.legend()
+
+    return plt.gcf(), rms_2_5, diff_2_5
+
 
 
 @SaveOutput(["task15a", "task15b"], plot_output_indices=itemgetter(0, 2))
@@ -247,19 +327,20 @@ if __name__ == "__main__":
     #task8()
 
     # Run task 10 function
-    FIG10 = task10()
+    #FIG10 = task10()
 
     # Run task 11 function
-    # FIG11, FOCAL_POINT = task11()
+    #task11()
+    #FIG11, FOCAL_POINT = task11()
 
     # Run task 12 function
-    # FIG12 = task12()
+    #FIG12 = task12()
 
     # Run task 13 function
-    # FIG13, TASK13_RMS = task13()
+    #FIG13, TASK13_RMS = task13()
 
     # Run task 14 function
-    # FIG14, TASK14_RMS, TASK14_DIFF_SCALE = task14()
+    FIG14, TASK14_RMS, TASK14_DIFF_SCALE = task14()
 
     # Run task 15 function
     # FIG15_PC, FOCAL_POINT_PC, FIG15_CP, FOCAL_POINT_CP = task15()
