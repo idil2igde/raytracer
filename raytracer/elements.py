@@ -14,7 +14,7 @@ class OpticalElement:
         
 
 class SphericalRefraction(OpticalElement):
-        def __init__(self, z_0 = 0, aperature = 0, curvature = 0., n_1 = 0., n_2 = 0.):
+        def __init__(self, z_0 = 0., aperature = 0., curvature = 0., n_1 = 0., n_2 = 0.):
                 self.__z0 = z_0
                 #where surface intercepts optical axis (z-axis)
                 self.__aperature = aperature
@@ -35,7 +35,7 @@ class SphericalRefraction(OpticalElement):
         def n_2(self):
                 return self.__n2
         
-        def intercept(self, ray):
+        def intercept(self, ray): #where the ray intercepts the spherical surface
                 direc = ray.direc()
                 pos = ray.pos()
                 curv = self.curvature()
@@ -57,7 +57,7 @@ class SphericalRefraction(OpticalElement):
 
                 return intercept_pos
         
-        def propagate_ray(self, ray):
+        def propagate_ray(self, ray): #trace the ray until intercept
                 direc = ray.direc()
                 n_1 = self.n_1()
                 n_2 = self.n_2()
