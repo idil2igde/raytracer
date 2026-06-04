@@ -39,6 +39,15 @@ class SphericalRefraction(OpticalElement):
                 direc = ray.direc()
                 pos = ray.pos()
                 curv = self.curvature()
+                if curv == 0:
+                        z_init = ray.pos()[2]
+                        z_direc = ray.direc()[2]
+                        if z_direc == 0: #if the ray is moving parallel to the plane
+                                return None
+                        l = (self.__z0 - z_init) / z_direc #distance travelled in ray direction before ray hits the plane
+                        if l < 0: # if the surface is behind the ray
+                                return None
+                        return pos + l * direc #position where the ray hits the plane
                 rad = 1 / curv #since the unit of curvature is mm-1, radius is inverse
                 z0 = self.z_0()
                 centre = np.array([0, 0, z0 + rad]) #centre of sphere is calculated by adding where surface crosses the z-axis and the radius of the sphere
@@ -62,20 +71,27 @@ class SphericalRefraction(OpticalElement):
                 n_1 = self.n_1()
                 n_2 = self.n_2()
                 curv = self.curvature()
-                rad = 1 / curv 
-                z0 = self.z_0()
-                centre = np.array([0, 0, z0 + rad])
+                
                 new_pos = self.intercept(ray)
                 if new_pos is None:
                         return None
-                normal = new_pos - centre #normal to a spherical surface
-                normal = normal / np.linalg.norm(normal) #finding direction
+
+                if curv == 0:
+                        normal = np.array([0, 0, 1])
+                else:
+                        rad = 1 / curv 
+                        z0 = self.z_0()
+                        centre = np.array([0, 0, z0 + rad])
+                        normal = new_pos - centre #normal to a spherical surface
+                        normal = normal / np.linalg.norm(normal) #finding direction
+                
                 new_direc = refract(direc, normal, n_1, n_2)
+                
                 if new_direc is None:
                         return None
                 ray.append(new_pos, new_direc)
                 return ray
-        
+                
         def focal_point(self): #calculating the focal point of a refracting spherical surface
                 n1 = self.n_1()
                 n2 = self.n_2()

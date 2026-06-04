@@ -90,11 +90,14 @@ class RayBundle(Ray):
         return rms
     
     def spot_plot(self): #plots the output x-y view of the screen
+        plt.figure() #to prevent graphs from being plotted on top of each other
+
         rays = self.rays()
         for i in rays:
             final_pos = i.vertices()[-1] #position of rays when they intersect with the output plane
             x = final_pos[0]
             y = final_pos[1]
             plt.scatter(x,y) #creates a scatter plot with non-connected points
+        
         return plt.gcf()
 

@@ -13,6 +13,8 @@ from raytracer.elements import OutputPlane
 
 from raytracer.rays import RayBundle
 
+from raytracer.lenses import *
+
 import numpy as np
 
 def task8():
@@ -229,7 +231,28 @@ def task15():
     Returns:
         tuple[Figure, float, Figure, float]: the spot plots and rms for plano-convex and convex-plano.
     """
-    return
+
+    pc = PlanoConvex(z_0=100, curvature1=0., curvature2=-0.02, n_inside=1.5168, n_outside=1., thickness=5., aperture=50.)
+    focal_point_pc = pc.focal_point_lens()
+    screen_pc = OutputPlane(focal_point_pc)
+
+    cp = PlanoConvex(z_0=100, curvature1=0.02, curvature2=0., n_inside=1.5168, n_outside=1., thickness=5., aperture=50.)
+    focal_point_cp = cp.focal_point_lens()
+    screen_cp = OutputPlane(focal_point_cp)
+
+    rb_1 = RayBundle(rmax=5., nrings=5., multi=6) #light beam with a radius of 5 mm
+    rb_1.propagate_bundle([pc, screen_pc])
+
+    rb_2 = RayBundle(rmax=5., nrings=5., multi=6)
+    rb_2.propagate_bundle([cp, screen_cp])
+
+    print("PC focal:", focal_point_pc)
+    print("CP focal:", focal_point_cp)
+
+    print(rb_1.rays()[0].vertices())
+    print(rb_2.rays()[0].vertices())    
+
+    return rb_1.spot_plot(), focal_point_pc, rb_2.spot_plot(), focal_point_cp
 
 
 @SaveOutput("task16", plot_output_indices=itemgetter(0))
@@ -248,6 +271,8 @@ def task16():
     Returns:
         tuple[Figure, float, float, float]: the plot, RMS for plano-convex, RMS for convex-plano, diffraction scale.
     """
+
+
     return
 
 
@@ -340,10 +365,10 @@ if __name__ == "__main__":
     #FIG13, TASK13_RMS = task13()
 
     # Run task 14 function
-    FIG14, TASK14_RMS, TASK14_DIFF_SCALE = task14()
+    #FIG14, TASK14_RMS, TASK14_DIFF_SCALE = task14()
 
     # Run task 15 function
-    # FIG15_PC, FOCAL_POINT_PC, FIG15_CP, FOCAL_POINT_CP = task15()
+    FIG15_PC, FOCAL_POINT_PC, FIG15_CP, FOCAL_POINT_CP = task15()
 
     # Run task 16 function
     # FIG16, PC_RMS, CP_RMS, TASK16_DIFF_SCALE = task16()
