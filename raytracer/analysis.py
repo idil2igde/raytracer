@@ -346,7 +346,7 @@ def task17():
     focal_point_cpl = cpl.focal_point_lens()
     screen_cpl = OutputPlane(focal_point_cpl) 
 
-    def rms_minimize(curvatures):
+    def rms_minimize(curvatures): #using the curvatures as parameters of hte biconvex lens to find the minimized rms
         c1, c2 = curvatures
         biconvex_lens = BiConvex(z_0=100, curvature1=c1, curvature2=c2, n_inside=1.5168, n_outside=1., thickness=5., aperture=50.)
         rb_bil.propagate_bundle([biconvex_lens, screen_cpl])
@@ -357,12 +357,13 @@ def task17():
     
     result = minimize(rms_minimize, x0 = [0.02, -0.02]) 
     c1_opt, c2_opt = result.x #returns the optimal parameter (curvature) values that minimizes the RMS
-    rms_min = result.fun
+    rms_min = result.fun #returns the minimized rms value
 
     biconvex_opt = BiConvex(z_0=100, curvature1=c1_opt, curvature2=c2_opt, n_inside=1.5168, n_outside=1., thickness=5., aperture=50.) #creating a new biconvex lens that minimizes the RMS
     rb_bil.propagate_bundle([biconvex_opt, screen_cpl])
 
-    for ray in rb_cpl.rays():
+    #to plot both spot plots on the same graphs instead of using spot_plot() functions I do the scatter plots individually
+    for ray in rb_cpl.rays(): 
         final_pos = ray.vertices()[-1]
         plt.scatter(final_pos[0], final_pos[1], label="PlanoConvex", color = "blue")
     for ray in rb_bil.rays():
@@ -388,7 +389,13 @@ def task18():
     Returns:
         tuple[Figure, float]: The track plot, the focal point
     """
-    return
+    sph_refl = SphericalReflection(z_0=100., aperture=6., curvature=-0.02)
+    rb = RayBundle(rmax=5., nrings=5., multi=6)
+    screen = OutputPlane(50)
+    rb.propagate_bundle([sph_refl, screen])
+    focal_point = sph_refl.focal_point()
+
+    return rb.spot_plot(), focal_point
 
 
 @SaveOutput(["task19a", "task19b"])
@@ -453,10 +460,10 @@ if __name__ == "__main__":
     #FIG16, PC_RMS, CP_RMS, TASK16_DIFF_SCALE = task16()
 
     # Run task 17 function
-    FIG17, CP_RMS, BICONVEX_RMS = task17()
+    # FIG17, CP_RMS, BICONVEX_RMS = task17()
 
     # Run task 18 function
-    # FIG18, FOCAL_POINT = task18()
+    FIG18, FOCAL_POINT = task18()
 
     # Run task 19 function
     # FIG19_TVSA, FIG19_LGSA = task19()

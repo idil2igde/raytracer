@@ -9,3 +9,7 @@ def refract(direc, normal, n_1, n_2): #assuming that incident and transmitted ra
     direc_refract = eta * direc + (eta * cos_1 - np.sqrt(1 - eta * eta * sin_1 * sin_1)) * normal
     norm_direc_r = direc_refract / np.linalg.norm(direc_refract)
     return norm_direc_r
+def reflect(direc, normal): #calculating the 
+    direc_reflect = direc - 2 * np.dot(direc, normal) * normal
+    norm_direc_ref = direc_reflect / np.linalg.norm(direc_reflect)
+    return norm_direc_ref

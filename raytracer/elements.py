@@ -1,7 +1,7 @@
 from raytracer.rays import Ray
 #importing Ray class from raytracer folder and rays file
 import numpy as np
-from raytracer.physics import refract
+from raytracer.physics import *
 
 
 class OpticalElement:
@@ -132,5 +132,39 @@ class OutputPlane(OpticalElement):
                         return None
                 ray.append(new_pos, direc) #keeping the direction of the ray same
                 return ray
+
+class SphericalReflection(SphericalRefraction): #since reflection class has exactly the same methods and variables contained in refract class we can just inherit it
+        def __init__(self, z_0 = 0., aperture = 0., curvature = 0.):
+                super().__init__(z_0 = z_0, aperature = aperture, curvature = curvature, n_1 = 1, n_2 = 2)
+        def propagate_ray(self, ray):
+                direc = ray.direc()
+                curv = self.curvature()
+                
+                new_pos = self.intercept(ray)
+                if new_pos is None:
+                        return None
+
+                if curv == 0:
+                        normal = np.array([0, 0, -1])
+                else:
+                        rad = 1 / curv 
+                        z0 = self.z_0()
+                        centre = np.array([0, 0, z0 + rad])
+                        normal = new_pos - centre #normal to a spherical surface
+                        normal = normal / np.linalg.norm(normal) #finding direction
+                        if np.dot(normal, direc) > 0:
+                                normal = -normal #from Snell's Law
+                new_direc = reflect(direc, normal)
+                if new_direc is None:
+                        return None
+                ray.append(new_pos, new_direc)
+                return ray
+        def focal_point(self):
+                curv = self.curvature()
+                rad = 1 / curv
+                focal_point = rad / 2
+                z0 = self.z_0()
+                return focal_point + z0
+
 
 
