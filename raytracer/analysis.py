@@ -271,9 +271,55 @@ def task16():
     Returns:
         tuple[Figure, float, float, float]: the plot, RMS for plano-convex, RMS for convex-plano, diffraction scale.
     """
+    radii = []
+    rms_pc = []
+    rms_cp = []
+    diff_val_pc = []
+    diff_val_cp = []
+    rms_3_5_pc = 0
+    rms_3_5_cp = 0
+    diff_3_5 = 0
+    pc = PlanoConvex(z_0=100, curvature1=0., curvature2=-0.02, n_inside=1.5168, n_outside=1., thickness=5., aperture=50.)
+    focal_point_pc = pc.focal_point_lens()
+    screen_pc = OutputPlane(focal_point_pc) 
+    cp = PlanoConvex(z_0=100, curvature1=0.02, curvature2=0., n_inside=1.5168, n_outside=1., thickness=5., aperture=50.)
+    focal_point_cp = cp.focal_point_lens()
+    screen_cp = OutputPlane(focal_point_cp)
+    for i in np.linspace(0.1, 10., 240): 
+        rb_pc = RayBundle(rmax=i, nrings=5., multi=6) #max radius 10 and min 0.1 milimeters
+        rb_cp = RayBundle(rmax=i, nrings=5., multi=6) #max radius 10 and min 0.1 milimeters
+        rb_pc.propagate_bundle([pc, screen_pc])
+        rb_cp.propagate_bundle([cp, screen_cp])
+        rms_pc.append(rb_pc.rms())
+        rms_cp.append(rb_cp.rms())
+        radii.append(i)
+        
+        
+        wavelength = 588e-6 #in milimeters
+        aperature = 2 * i #diameter of the refracting surface
+        del_x_pc = wavelength * focal_point_pc / aperature
+        del_x_cp = wavelength * focal_point_cp / aperature
+        diff_val_pc.append(del_x_pc)
+        diff_val_cp.append(del_x_cp)
 
+        if np.isclose(i, 3.5):
+            rms_3_5_pc = rb_pc.rms()
+            rms_3_5_cp = rb_cp.rms()
+            diff_3_5 = del_x_pc
+    
+    plt.plot(radii, rms_pc, label ="RMS value plano convex")
+    #plt.plot(radii, diff_val_pc, label = "Diffraction scale plano convex")
+    plt.plot(radii, rms_cp, label ="RMS value convex plano")
+    plt.plot(radii, diff_val_cp, label = "Diffraction scale for pc & cp")
+    plt.xlabel("Input beam radius (mm)")
+    plt.ylabel("Spot size (mm)")
+    
+    plt.legend()
 
-    return
+    print(rms_3_5_pc)
+    print(rms_3_5_cp)
+
+    return plt.gcf(), rms_3_5_pc, rms_3_5_cp, diff_3_5
 
 
 @SaveOutput("task17", plot_output_indices=itemgetter(0))
@@ -368,10 +414,10 @@ if __name__ == "__main__":
     #FIG14, TASK14_RMS, TASK14_DIFF_SCALE = task14()
 
     # Run task 15 function
-    FIG15_PC, FOCAL_POINT_PC, FIG15_CP, FOCAL_POINT_CP = task15()
+    #FIG15_PC, FOCAL_POINT_PC, FIG15_CP, FOCAL_POINT_CP = task15()
 
     # Run task 16 function
-    # FIG16, PC_RMS, CP_RMS, TASK16_DIFF_SCALE = task16()
+    FIG16, PC_RMS, CP_RMS, TASK16_DIFF_SCALE = task16()
 
     # Run task 17 function
     # FIG17, CP_RMS, BICONVEX_RMS = task17()

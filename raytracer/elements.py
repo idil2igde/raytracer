@@ -58,11 +58,16 @@ class SphericalRefraction(OpticalElement):
                         return None #no real solutions to quad formula exists for negative discriminant
                 l1 = - dot_1 + np.sqrt(disc)
                 l2 = - dot_1 - np.sqrt(disc)
-                valid = [l for l in [l1, l2] if l > 0] #choosing positive root 
+                valid = [] 
+                for l in [l1, l2]:
+                        if l > 0: #ray travelling forward
+                                point = pos + l * direc #where the ray strikes the physical surface
+                                radial_distance = np.sqrt(point[0]**2 + point[1]**2) #Pythagoras' theorem
+                                if radial_distance <= self.__aperature: #if the ray hits the spherical point beyond the space aperature is filling
+                                        valid.append(point)
                 if len(valid) == 0:
-                        return None #if both roots are not valid
-                l = min(valid) #smallest possible positive root gives the first instance of intercept
-                intercept_pos = pos + l * direc #ray only travels forward, adding intercept distance to initial ray position in ray direction
+                        return None #if there are no valid points for both roots
+                intercept_pos = min(valid, key = lambda point: np.dot(point - pos, direc)) #if both roots are valid, detecting the ray that hits the surface first
 
                 return intercept_pos
         
@@ -77,13 +82,15 @@ class SphericalRefraction(OpticalElement):
                         return None
 
                 if curv == 0:
-                        normal = np.array([0, 0, 1])
+                        normal = np.array([0, 0, -1])
                 else:
                         rad = 1 / curv 
                         z0 = self.z_0()
                         centre = np.array([0, 0, z0 + rad])
                         normal = new_pos - centre #normal to a spherical surface
                         normal = normal / np.linalg.norm(normal) #finding direction
+                        if np.dot(normal, direc) > 0:
+                                normal = -normal #from Snell's Law
                 
                 new_direc = refract(direc, normal, n_1, n_2)
                 
