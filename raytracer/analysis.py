@@ -324,6 +324,7 @@ def task16():
 
 @SaveOutput("task17", plot_output_indices=itemgetter(0))
 def task17():
+    from scipy.optimize import minimize
     """
     Task 17.
 
@@ -338,7 +339,39 @@ def task17():
     Returns:
         tuple[Figure, float, float]: The combined spot plot, RMS for the PC lens, RMS for the BiConvex lens
     """
-    return
+
+    cpl = PlanoConvex(z_0=100, curvature1=0.02, curvature2=0., n_inside=1.5168, n_outside=1., thickness=5., aperture=50.)
+    rb_cpl = RayBundle(rmax=5., nrings=5., multi=6)
+    rb_bil = RayBundle(rmax=5., nrings=5., multi=6)
+    focal_point_cpl = cpl.focal_point_lens()
+    screen_cpl = OutputPlane(focal_point_cpl) 
+
+    def rms_minimize(curvatures):
+        c1, c2 = curvatures
+        biconvex_lens = BiConvex(z_0=100, curvature1=c1, curvature2=c2, n_inside=1.5168, n_outside=1., thickness=5., aperture=50.)
+        rb_bil.propagate_bundle([biconvex_lens, screen_cpl])
+        return rb_bil.rms()
+
+    rb_cpl.propagate_bundle([cpl, screen_cpl])
+    rms_cpl = rb_cpl.rms()
+    
+    result = minimize(rms_minimize, x0 = [0.02, -0.02]) 
+    c1_opt, c2_opt = result.x #returns the optimal parameter (curvature) values that minimizes the RMS
+    rms_min = result.fun
+
+    biconvex_opt = BiConvex(z_0=100, curvature1=c1_opt, curvature2=c2_opt, n_inside=1.5168, n_outside=1., thickness=5., aperture=50.) #creating a new biconvex lens that minimizes the RMS
+    rb_bil.propagate_bundle([biconvex_opt, screen_cpl])
+
+    for ray in rb_cpl.rays():
+        final_pos = ray.vertices()[-1]
+        plt.scatter(final_pos[0], final_pos[1], label="PlanoConvex", color = "blue")
+    for ray in rb_bil.rays():
+        final_pos = ray.vertices()[-1]
+        plt.scatter(final_pos[0], final_pos[1], label="BiConvex", color = "red")
+    plt.xlabel("x position (mm)")
+    plt.ylabel("y position (mm)")
+
+    return plt.gcf(), rms_cpl, rms_min
 
 
 @SaveOutput("task18", plot_output_indices=itemgetter(0))
@@ -417,10 +450,10 @@ if __name__ == "__main__":
     #FIG15_PC, FOCAL_POINT_PC, FIG15_CP, FOCAL_POINT_CP = task15()
 
     # Run task 16 function
-    FIG16, PC_RMS, CP_RMS, TASK16_DIFF_SCALE = task16()
+    #FIG16, PC_RMS, CP_RMS, TASK16_DIFF_SCALE = task16()
 
     # Run task 17 function
-    # FIG17, CP_RMS, BICONVEX_RMS = task17()
+    FIG17, CP_RMS, BICONVEX_RMS = task17()
 
     # Run task 18 function
     # FIG18, FOCAL_POINT = task18()
