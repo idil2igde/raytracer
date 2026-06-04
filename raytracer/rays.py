@@ -4,16 +4,19 @@ import matplotlib.pyplot as plt
 #from raytracer.elements import OutputPlane
 
 class Ray:
-    def __init__(self, pos = np.array([0, 0, 0]), direc = np.array([0, 0, 1])):
+    def __init__(self, pos = np.array([0, 0, 0]), direc = np.array([0, 0, 1]), wavelength = 588e-9):
         self.__pos = pos #the current position of the ray / a point in space
         self.__direc = direc #the current direction of the ray
         self.__vertices = [self.__pos] #all the points (positions) the ray passes through
+        self.__wavelength = wavelength
         #brackets to create a list out of array
     #access methods
     def pos(self):
         return self.__pos
     def direc(self):
         return self.__direc
+    def wavelength(self):
+        return self.__wavelength
     def append(self, pos, direc):
         #adding new points along the ray in 3D
         self.__pos = np.array(pos)
@@ -26,7 +29,13 @@ class Ray:
     def __repr__(self):
         #to return ray object in string form to make it more comprehensible
         return f"Ray(pos={self.__pos}, direc={self.__direc})"
-
+    def z_int(self):
+        #calculates where the ray crosses the optical axis given its direction
+        direc = self.direc()
+        pos = self.pos()
+        l = - pos[0] / direc[0] #since x and y must be 0 when the ray crosses the optical axis
+        z = pos[2] + l * direc[2]
+        return z
 
 class RayBundle(Ray):
     def __init__(self, rmax = 5., nrings = 5., multi = 6): #ray bundle is a circular light beam
@@ -100,4 +109,5 @@ class RayBundle(Ray):
             plt.scatter(x,y) #creates a scatter plot with non-connected points
         
         return plt.gcf()
+
 

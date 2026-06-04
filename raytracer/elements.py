@@ -14,10 +14,10 @@ class OpticalElement:
         
 
 class SphericalRefraction(OpticalElement):
-        def __init__(self, z_0 = 0., aperature = 0., curvature = 0., n_1 = 0., n_2 = 0.):
+        def __init__(self, z_0 = 0., aperture = 0., curvature = 0., n_1 = 0., n_2 = 0.):
                 self.__z0 = z_0
                 #where surface intercepts optical axis (z-axis)
-                self.__aperature = aperature
+                self.__aperture = aperture
                 #extend of surface from optical axis 
                 self.__curvature = curvature
                 #curvature of the surface (radius of spherical surface)
@@ -26,14 +26,18 @@ class SphericalRefraction(OpticalElement):
         #the accessor methods for each parameter of SphericalRefraction initialization method
         def z_0(self):
                 return self.__z0
-        def aperature(self):
-                return self.__aperature
+        def aperture(self):
+                return self.__aperture
         def curvature(self):
                 return self.__curvature
-        def n_1(self):
-                return self.__n1
-        def n_2(self):
-                return self.__n2
+        def n_1(self, wavelength = None):
+                if isinstance(self.__n1, (float, int)):
+                        return self.__n1
+                return self.__n1.ref_index(wavelength)
+        def n_2(self, wavelength = None):
+                if isinstance(self.__n2, (float, int)):
+                        return self.__n2
+                return self.__n2.ref_index(wavelength)
         
         def intercept(self, ray): #where the ray intercepts the spherical surface
                 direc = ray.direc()
@@ -63,7 +67,7 @@ class SphericalRefraction(OpticalElement):
                         if l > 0: #ray travelling forward
                                 point = pos + l * direc #where the ray strikes the physical surface
                                 radial_distance = np.sqrt(point[0]**2 + point[1]**2) #Pythagoras' theorem
-                                if radial_distance <= self.__aperature: #if the ray hits the spherical point beyond the space aperature is filling
+                                if radial_distance <= self.__aperture: #if the ray hits the spherical point beyond the space aperture is filling
                                         valid.append(point)
                 if len(valid) == 0:
                         return None #if there are no valid points for both roots
@@ -73,8 +77,8 @@ class SphericalRefraction(OpticalElement):
         
         def propagate_ray(self, ray): #trace the ray until intercept
                 direc = ray.direc()
-                n_1 = self.n_1()
-                n_2 = self.n_2()
+                n_1 = self.n_1(ray.wavelength())
+                n_2 = self.n_2(ray.wavelength())
                 curv = self.curvature()
                 
                 new_pos = self.intercept(ray)
@@ -99,9 +103,9 @@ class SphericalRefraction(OpticalElement):
                 ray.append(new_pos, new_direc)
                 return ray
                 
-        def focal_point(self): #calculating the focal point of a refracting spherical surface
-                n1 = self.n_1()
-                n2 = self.n_2()
+        def focal_point(self, wavelength): #calculating the focal point of a refracting spherical surface
+                n1 = self.n_1(wavelength)
+                n2 = self.n_2(wavelength)
                 rad = 1 / self.curvature()
                 focal_point = n2 * rad / (n2 - n1) #paraxial focus of a single spherical refracting surface
                 z0 = self.z_0()
@@ -135,7 +139,7 @@ class OutputPlane(OpticalElement):
 
 class SphericalReflection(SphericalRefraction): #since reflection class has exactly the same methods and variables contained in refract class we can just inherit it
         def __init__(self, z_0 = 0., aperture = 0., curvature = 0.):
-                super().__init__(z_0 = z_0, aperature = aperture, curvature = curvature, n_1 = 1, n_2 = 2)
+                super().__init__(z_0 = z_0, aperture = aperture, curvature = curvature, n_1 = 1, n_2 = 2)
         def propagate_ray(self, ray):
                 direc = ray.direc()
                 curv = self.curvature()

@@ -13,3 +13,17 @@ def reflect(direc, normal): #calculating the
     direc_reflect = direc - 2 * np.dot(direc, normal) * normal
     norm_direc_ref = direc_reflect / np.linalg.norm(direc_reflect)
     return norm_direc_ref
+
+class DispersiveMaterial:
+    def __init__(self, b_coeffs = (1. , 2., 3.), c_coeffs=(4., 5., 6)):
+        self.__b_coeffs = b_coeffs #Sellmeier coefficients
+        self.__c_coeffs = c_coeffs
+    def ref_index(self, wavelength): #Sellmeier equation to calculate the refractive index for a specific wavelength using the coefficients
+        term = 0
+        for i in range(3):
+            numerator = self.__b_coeffs[i] * wavelength * wavelength
+            denominator = wavelength * wavelength - self.__c_coeffs[i]
+            term += numerator / denominator
+        refractive_index = np.sqrt(1 + term)
+        return refractive_index
+

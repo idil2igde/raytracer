@@ -35,7 +35,7 @@ def task8():
     print("final direc:", ray.direc())
     print("vertices:", ray.vertices())
     print("propagated ray:", repr(new_ray))
-    print(new_ray)
+    return new_ray
 
 @SaveOutput("task10")
 def task10():
@@ -67,6 +67,7 @@ def task10():
     plt.plot(z, y)
     plt.xlabel("Ray travelling in z-direction")
     plt.ylabel("y-direction")
+    return plt.gcf()
 
 
 @SaveOutput("task11", plot_output_indices=itemgetter(0))
@@ -414,7 +415,37 @@ def task19():
     Returns:
         tuple[Figure, Figure]: Transverse spherical aberration plot, longitudinal spherical aberration plot
     """
-    return
+    radii = []
+    rms_pc = []
+    z_intercept = []
+    r = []
+    pc = PlanoConvex(z_0=100, curvature1=0.02, curvature2=0., n_inside=1.5168, n_outside=1., thickness=5., aperture=50.)
+    focal_point_pc = pc.focal_point_lens()
+    screen_pc = OutputPlane(focal_point_pc) 
+    for i in np.linspace(0.1, 20., 480): #for each ray bundle ring calculating rms
+        rb_pc = RayBundle(rmax=i, nrings=5., multi=6) 
+        rb_pc.propagate_bundle([pc, screen_pc])
+        rms_pc.append(rb_pc.rms())
+        radii.append(i)
+
+        for ray in rb_pc.rays(): #for each ray in the bundle calculating the transverse distance from the optical axis and the z intercept
+            z_intercept.append(ray.z_int())
+            start_pos = ray.vertices()[0]
+            r_add = np.sqrt(start_pos[0] * start_pos[0] + start_pos[1] * start_pos[1])
+            r.append(r_add)
+    
+    fig1 = plt.figure()
+    plt.plot(radii, rms_pc)
+    plt.xlabel("Input beam radius (mm)")
+    plt.ylabel("RMS spot size (mm)")
+    
+    fig2 = plt.figure()
+    plt.scatter(r, z_intercept)
+    plt.axhline(focal_point_pc)
+    plt.xlabel("Transverse distance from optical axis (mm)")
+    plt.ylabel("z intercept (mm)")
+
+    return fig1, fig2
 
 
 @SaveOutput("task20")
@@ -429,7 +460,24 @@ def task20():
     Returns:
         Figure: The ray track plot.
     """
-    return
+    BK7 = DispersiveMaterial(b_coeffs = (1.03961212, 0.231792344, 1.01046945), c_coeffs = (0.00600069867, 0.0200179144, 103.560653))
+    wavelengths = [400e-6, 450e-6, 500e-6, 550e-6, 600e-6, 650e-6, 700e-6]
+    biconvex_lens = BiConvex(z_0=100, curvature1=0.02, curvature2=-0.02, n_inside = BK7, n_outside=1., thickness=5., aperture=50.)
+    screen = OutputPlane(200.) #randomly positioned screem
+    for wl in wavelengths:
+        ray = Ray(pos=np.array([1., 0., 0.]), direc=np.array([0., 0., 1.]), wavelength=wl)
+        biconvex_lens.propagate_ray(ray)
+        screen.propagate_ray(ray)
+        vertices = ray.vertices()
+        z = [v[2] for v in vertices]
+        x = [v[0] for v in vertices]
+
+        plt.plot(z, x)
+
+        plt.xlabel("z (mm)")
+        plt.ylabel("x (mm)")
+
+    return plt.gcf()
 
 
 if __name__ == "__main__":
@@ -460,15 +508,15 @@ if __name__ == "__main__":
     #FIG16, PC_RMS, CP_RMS, TASK16_DIFF_SCALE = task16()
 
     # Run task 17 function
-    # FIG17, CP_RMS, BICONVEX_RMS = task17()
+    #FIG17, CP_RMS, BICONVEX_RMS = task17()
 
     # Run task 18 function
-    FIG18, FOCAL_POINT = task18()
+    #FIG18, FOCAL_POINT = task18()
 
     # Run task 19 function
-    # FIG19_TVSA, FIG19_LGSA = task19()
+    #FIG19_TVSA, FIG19_LGSA = task19()
 
     # Run task 20 function
-    # FIG20 = task20()
+    FIG20 = task20()
 
     plt.show()
