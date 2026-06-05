@@ -19,7 +19,7 @@ class PlanoConvex:
         self.__concave_lens.propagate_ray(ray)
     #focal point calculator usign paraxial approximation, just propagating the ray through the refracting surface to see where it ends up
     def focal_point_lens(self):
-        ray = Ray(np.array([0.1, 0, 0]), np.array([0, 0, 1]))
+        ray = Ray(np.array([1e-7, 0, 0]), np.array([0, 0, 1])) #a suffeciently small height was chosen for paraxial approximation to work in position[0]
         self.propagate_ray(ray)
         pos = ray.pos()
         direc = ray.direc()

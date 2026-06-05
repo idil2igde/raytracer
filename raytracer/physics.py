@@ -3,6 +3,8 @@ import numpy as np
 def refract(direc, normal, n_1, n_2): #assuming that incident and transmitted rays are normalized
     direc = np.array(direc, dtype = float)
     normal = np.array(normal, dtype = float)
+    direc = direc / np.linalg.norm(direc) #normalizing to get unit vectors for both direction and normal to the surface
+    normal = normal / np.linalg.norm(normal)
     sin_1 = np.linalg.norm(np.cross(direc, normal)) #incident angle from normal and direction of incident ray
     cos_1 = -np.dot(direc, normal)
     eta = n_1 / n_2

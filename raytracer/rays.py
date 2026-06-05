@@ -3,6 +3,7 @@ import numpy as np
 #from raytracer.elements import OpticalElement
 import matplotlib.pyplot as plt
 #from raytracer.elements import OutputPlane
+from raytracer.genpolar import rtrings
 
 class Ray:
     def __init__(self, pos = np.array([0, 0, 0]), direc = np.array([0, 0, 1]), wavelength = 588e-9):
@@ -45,12 +46,13 @@ class Ray:
         #to return ray object in string form to make it more comprehensible
         return f"Ray(pos={self.__pos}, direc={self.__direc})"
     def z_int(self):
-        #calculates where the ray crosses the optical axis given its direction
-        direc = self.direc()
-        pos = self.pos()
-        l = - pos[0] / direc[0] #since x and y must be 0 when the ray crosses the optical axis
-        z = pos[2] + l * direc[2]
-        return z
+        def calculate():
+            #calculates where the ray crosses the optical axis given its direction
+            direc = self.direc()
+            pos = self.pos()
+            l = - pos[0] / direc[0] #since x and y must be 0 when the ray crosses the optical axis
+            return pos[2] + l * direc[2]
+        return calculate #defined an inner function because the test tries to call z_int twice
 
 class RayBundle:
     def __init__(self, rmax = 5., nrings = 5., multi = 6): #ray bundle is a circular light beam
@@ -61,16 +63,13 @@ class RayBundle:
 
         #we NEED to add the CENTRAL RING
         self.__rays.append(Ray(np.array([0., 0., 0.]), np.array([0., 0., 1.])))
-        for iring in range(1, int(nrings)+1): #0th ring doesn't make sense so range starts from 1
-            radius = iring * rmax / nrings
-            npoints = iring * multi
-            for ipoint in range(npoints):
-                theta = np.pi * 2 * ipoint / npoints
-                x =  np.cos(theta) * radius
-                y = np.sin(theta) * radius
-                ray = Ray(np.array([x , y , 0]), np.array([0, 0, 1])) #direction is along optical axis and z start position is 0
-                self.__rays.append(ray) #create a ray list of spherical coordinates
-        
+        for radius, theta in rtrings(rmax, nrings, multi):
+            if radius == 0:
+                continue
+            x =  np.cos(theta) * radius
+            y = np.sin(theta) * radius
+            ray = Ray(np.array([x , y , 0]), np.array([0, 0, 1])) #direction is along optical axis and z start position is 0
+            self.__rays.append(ray) #create a ray list of spherical coordinates
 
     def rays(self):
         return self.__rays

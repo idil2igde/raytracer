@@ -173,8 +173,8 @@ class SphericalReflection(SphericalRefraction): #since reflection class has exac
                 curv = self.curvature()
                 rad = 1 / curv
                 focal_point = rad / 2 #focal point equation for spherical mirrors
-                #z0 = self.z_0()
-                return focal_point
+                z0 = self.z_0()
+                return focal_point + z0
 
 
 

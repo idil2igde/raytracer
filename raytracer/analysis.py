@@ -26,16 +26,14 @@ def task8():
     to check that the correct values are appended to your Ray object.
     """
 
-    ray = Ray(np.array([0, 0, 0]), np.array([0, 0, 1]))
+    rays = [Ray(np.array([0, 0, 0]), np.array([0, 0, 1])), Ray(np.array([0, 1, 0]), np.array([0, 0, 1])), Ray(np.array([0, -1, 0]), np.array([0, 0, 1]))]
 
-    aperature = SphericalRefraction(20, 5, 10, 1, 1.5) 
+    surface = SphericalRefraction(20, 5, 10, 1, 1.5) 
 
-    new_ray = aperature.propagate_ray(ray)
-    print("final pos:", ray.pos())
-    print("final direc:", ray.direc())
-    print("vertices:", ray.vertices())
-    print("propagated ray:", repr(new_ray))
-    return new_ray
+    for ray in rays:
+        surface.propagate_ray(ray)
+      
+    return rays[1]
 
 @SaveOutput("task10")
 def task10():
@@ -50,21 +48,25 @@ def task10():
     Returns:
         Figure: the ray path plot.
     """
-    ray = Ray(np.array([0, 0, 0]), np.array([0, 0, 1]))
+    positions = ([0, 4, 0], [0, 1, 0], [0, 0.2, 0], [0, 0, 0], [0, -0.2, 0], [0, -1, 0], [0, -4, 0])
+    #positions given in the task
 
     surface = SphericalRefraction(100, 34, 0.03, 1, 1.5) #given values in the task
 
     screen = OutputPlane(250)
 
-    surface.propagate_ray(ray)
-    screen.propagate_ray(ray)
+    for pos in positions:
+        ray = Ray(np.array(pos), np.array([0, 0, 1]))
+        surface.propagate_ray(ray)
+        screen.propagate_ray(ray)
 
-    vertices = ray.vertices() #tracing the travel of the ray
+        vertices = ray.vertices() #tracing the travel of the ray
 
-    z = [point[2] for point in vertices] #plot z-direction the direction of ray travel on x-axis in the plot
-    y = [point[1] for point in vertices]
+        z = [point[2] for point in vertices] #plot z-direction the direction of ray travel on x-axis in the plot
+        y = [point[1] for point in vertices]
 
-    plt.plot(z, y)
+        plt.plot(z, y)
+
     plt.xlabel("Ray travelling in z-direction")
     plt.ylabel("y-direction")
     return plt.gcf()
@@ -188,24 +190,27 @@ def task14():
     diff_values = []
     rms_2_5 = 0
     diff_2_5 = 0
+    surface = SphericalRefraction(100, 34, 0.03, 1, 1.5)
+    focal_point = surface.focal_point()
+    screen = OutputPlane(focal_point) #screen placed at the focal point
+    
     for i in np.linspace(0.1, 10., 240): #240 chosen so we get a value in one of the steps close to 2.5 mm
         rb = RayBundle(rmax=i, nrings=5., multi=6) #max radius 10 and min 0.1 milimeters
-        surface = SphericalRefraction(100, 34, 0.03, 1, 1.5)
-        focal_point = surface.focal_point()
-        screen = OutputPlane(focal_point) #screen placed at the focal point
         rb.propagate_bundle([surface, screen])
         rms_point = rb.rms()
         radii.append(i)
         rms_values.append(rms_point)
         
         wavelength = 588e-6 #in milimeters
-        aperature = 2 * i #diameter of the refracting surface
+        aperature = 2 * 2 * i #diameter of the refracting surface
         del_x = wavelength * focal_point / aperature
         diff_values.append(del_x)
-
-        if np.isclose(i, 2.5):
-            rms_2_5 = rb.rms()
-            diff_2_5 = del_x
+    
+    rb = RayBundle(rmax = 2.5, nrings = 5, multi = 6)
+    rb.propagate_bundle([surface, screen])
+    rms_2_5 = rb.rms()
+    aperture_2_5 = 2 * 2 * 2.5
+    diff_2_5 = wavelength * focal_point / aperture_2_5
     
     plt.plot(radii, rms_values, label ="RMS value")
     plt.plot(radii, diff_values, label = "Diffraction scale")
@@ -289,6 +294,7 @@ def task16():
     cp = PlanoConvex(z_0=100, curvature1=0.02, curvature2=0., n_inside=1.5168, n_outside=1., thickness=5., aperture=50.)
     focal_point_cp = cp.focal_point_lens()
     screen_cp = OutputPlane(focal_point_cp)
+    wavelength = 588e-6 #in milimeters
     for i in np.linspace(0.1, 10., 240): 
         rb_pc = RayBundle(rmax=i, nrings=5., multi=6) #max radius 10 and min 0.1 milimeters
         rb_cp = RayBundle(rmax=i, nrings=5., multi=6) #max radius 10 and min 0.1 milimeters
@@ -299,17 +305,23 @@ def task16():
         radii.append(i)
         
         
-        wavelength = 588e-6 #in milimeters
-        aperature = 2 * i #diameter of the refracting surface
+        aperature = 2 * 2 * i #diameter of the refracting surface
         del_x_pc = wavelength * focal_point_pc / aperature
         del_x_cp = wavelength * focal_point_cp / aperature
         diff_val_pc.append(del_x_pc)
         diff_val_cp.append(del_x_cp)
 
-        if np.isclose(i, 3.5):
-            rms_3_5_pc = rb_pc.rms()
-            rms_3_5_cp = rb_cp.rms()
-            diff_3_5 = del_x_pc
+    rb_pc = RayBundle(rmax=3.5, nrings=5., multi=6)
+    rb_cp = RayBundle(rmax=3.5, nrings=5., multi=6)
+
+    rb_pc.propagate_bundle([pc, screen_pc])
+    rb_cp.propagate_bundle([cp, screen_cp])
+
+    rms_3_5_pc = rb_pc.rms()
+    rms_3_5_cp = rb_cp.rms()
+
+    aperture = 2 * 3.5
+    diff_3_5 = wavelength * (focal_point_pc - 105.) / aperture #the effective focal length is measured from the rear end of the lens therefore 5 mm thickness and z_0 at 100 results in 105. mm
     
     plt.plot(radii, rms_pc, label ="RMS value plano convex")
     #plt.plot(radii, diff_val_pc, label = "Diffraction scale plano convex")
@@ -320,8 +332,8 @@ def task16():
     
     plt.legend()
 
-    print(rms_3_5_pc)
-    print(rms_3_5_cp)
+    print(focal_point_pc)
+    print(focal_point_cp)
 
     return plt.gcf(), rms_3_5_pc, rms_3_5_cp, diff_3_5
 
@@ -345,16 +357,17 @@ def task17():
     """
 
     cpl = PlanoConvex(z_0=100, curvature1=0.02, curvature2=0., n_inside=1.5168, n_outside=1., thickness=5., aperture=50.)
-    rb_cpl = RayBundle(rmax=5., nrings=5., multi=6)
     rb_bil = RayBundle(rmax=5., nrings=5., multi=6)
+    rb_cpl = RayBundle(rmax=5., nrings=5., multi=6)
     focal_point_cpl = cpl.focal_point_lens()
     screen_cpl = OutputPlane(focal_point_cpl) 
 
     def rms_minimize(curvatures): #using the curvatures as parameters of hte biconvex lens to find the minimized rms
         c1, c2 = curvatures
         biconvex_lens = BiConvex(z_0=100, curvature1=c1, curvature2=c2, n_inside=1.5168, n_outside=1., thickness=5., aperture=50.)
-        rb_bil.propagate_bundle([biconvex_lens, screen_cpl])
-        return rb_bil.rms()
+        rb = RayBundle(rmax=5., nrings=5., multi=6)
+        rb.propagate_bundle([biconvex_lens, screen_cpl])
+        return rb.rms()
 
     rb_cpl.propagate_bundle([cpl, screen_cpl])
     rms_cpl = rb_cpl.rms()
@@ -432,7 +445,7 @@ def task19():
         radii.append(i)
 
         for ray in rb_pc.rays(): #for each ray in the bundle calculating the transverse distance from the optical axis and the z intercept
-            z_intercept.append(ray.z_int())
+            z_intercept.append(ray.z_int()())
             start_pos = ray.vertices()[0]
             r_add = np.sqrt(start_pos[0] * start_pos[0] + start_pos[1] * start_pos[1])
             r.append(r_add)
@@ -492,8 +505,7 @@ if __name__ == "__main__":
     #FIG10 = task10()
 
     # Run task 11 function
-    #task11()
-    FIG11, FOCAL_POINT = task11()
+    #FIG11, FOCAL_POINT = task11()
 
     # Run task 12 function
     #FIG12 = task12()
@@ -508,6 +520,7 @@ if __name__ == "__main__":
     #FIG15_PC, FOCAL_POINT_PC, FIG15_CP, FOCAL_POINT_CP = task15()
 
     # Run task 16 function
+    task16()
     #FIG16, PC_RMS, CP_RMS, TASK16_DIFF_SCALE = task16()
 
     # Run task 17 function
