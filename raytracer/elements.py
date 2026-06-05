@@ -1,3 +1,4 @@
+"""Optical Elements module"""
 from raytracer.rays import Ray
 #importing Ray class from raytracer folder and rays file
 import numpy as np
@@ -5,6 +6,9 @@ from raytracer.physics import *
 
 
 class OpticalElement:
+        """
+        Defines how light beams interacts with the optical element to propagate through them
+        """
         def intercept(self, ray):
                 #tests whether the ray will intercept with the optical object
                 raise NotImplementedError('intercept() needs to be implemented in derived classes')
@@ -13,6 +17,9 @@ class OpticalElement:
                 raise NotImplementedError('propagate_ray() needs to be implemented in derived classes')
         
 class Surface(OpticalElement):
+        """
+        An intermediate class defining the geometrical intercept point of the llightrays to the surface of the optical element
+        """
         def intercept(self, ray): #where the ray intercepts the spherical surface
                 direc = ray.direc()
                 pos = ray.pos()
@@ -50,6 +57,11 @@ class Surface(OpticalElement):
                 return intercept_pos
 
 class SphericalRefraction(Surface):
+        """
+        Represents a spherical refracting surface.
+
+        0 curvature represents a planar refracting surface.
+        """
         def __init__(self, z_0 = 0., aperture = 0., curvature = 0., n_1 = 0., n_2 = 0.):
                 self.__z0 = z_0
                 #where surface intercepts optical axis (z-axis)
@@ -74,8 +86,6 @@ class SphericalRefraction(Surface):
                 if isinstance(self.__n2, (float, int)):
                         return self.__n2
                 return self.__n2.ref_index(wavelength)
-        
-
         
         def propagate_ray(self, ray): #trace the ray until intercept
                 direc = ray.direc()
@@ -114,6 +124,9 @@ class SphericalRefraction(Surface):
                 return focal_point + z0
 
 class Plane(OpticalElement):
+        """
+        An intermediate class to host the intercept function.
+        """
         def intercept(self, ray):
                 z_0 = self.z_0() #where the plane is in z-direction
                 z_init = ray.pos()[2]
@@ -129,12 +142,13 @@ class Plane(OpticalElement):
                 return intercept_pos
 
 class OutputPlane(Plane):
+        """"
+        Represents an outputplane or the screen where the light rays hit after interacting with an optical element.
+        """
         def __init__(self, z_0):
                 self.__z0 = z_0
-        
         def z_0(self):
                 return self.__z0
-        
         def propagate_ray(self, ray):
                 new_pos = self.intercept(ray)
                 direc = ray.direc()
@@ -144,6 +158,9 @@ class OutputPlane(Plane):
                 return ray
 
 class SphericalReflection(SphericalRefraction): #since reflection class has exactly the same methods and variables contained in refract class we can just inherit it
+        """
+        Represents a spherical reflective surface centered at the optical axis.
+        """
         def __init__(self, z_0 = 0., aperture = 0., curvature = 0.):
                 super().__init__(z_0 = z_0, aperture = aperture, curvature = curvature, n_1 = 1, n_2 = 2)
         def propagate_ray(self, ray):

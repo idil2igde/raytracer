@@ -6,12 +6,16 @@ import matplotlib.pyplot as plt
 from raytracer.genpolar import rtrings
 
 class Ray:
+    """
+    Ray class representing to initiate a single light ray of chosen position, direction and wavelength. Stores the full list of
+    positions the ray has been through.
+    """
     def __init__(self, pos = np.array([0, 0, 0]), direc = np.array([0, 0, 1]), wavelength = 588e-9):
-        self.__pos =self._check_vector(pos) #the current position of the ray / a point in space
-        self.__direc = self._normalise(self._check_vector(direc)) #the current direction of the ray
+        self.__pos =self._check_vector(pos) #the current position of the ray / a vector in space 
+        self.__direc = self._normalise(self._check_vector(direc)) #the current direction of the ray normalised
         self.__vertices = [self.__pos] #all the points (positions) the ray passes through
         self.__wavelength = wavelength
-        #brackets to create a list out of array
+    
     #check if position and direction are vectors or not
     def _check_vector(self, vec):
         if not isinstance(vec, (list, np.ndarray)):
@@ -21,12 +25,13 @@ class Ray:
             raise Exception("Vector must have length 3")
         return arr
     
-    def _normalise(self, vec):
+    def _normalise(self, vec): 
         norm = np.linalg.norm(vec)
         if norm == 0:
             raise Exception("Direction vector cannot be zero")
         return vec / norm
-    #access methods
+    
+    #accessor methods 
     def pos(self):
         return self.__pos
     def direc(self):
@@ -55,6 +60,11 @@ class Ray:
         return calculate #defined an inner function because the test tries to call z_int twice
 
 class RayBundle:
+    """
+    RayBundle class similar to Ray creates optical rays but a number of them in polar coordinates, circular.
+    
+    The rays generated are concentric rings around the optical axis.
+    """
     def __init__(self, rmax = 5., nrings = 5., multi = 6): #ray bundle is a circular light beam
         self.__rmax = rmax
         self.__nrings = nrings
@@ -71,10 +81,13 @@ class RayBundle:
             ray = Ray(np.array([x , y , 0]), np.array([0, 0, 1])) #direction is along optical axis and z start position is 0
             self.__rays.append(ray) #create a ray list of spherical coordinates
 
-    def rays(self):
+    def rays(self): #accessor method
         return self.__rays
     
     def propagate_bundle(self, elements): #elements is a list of OpticalElements objects
+        """
+        Propagates the ray bundle through a list of optical elements
+        """
         rays = self.rays()
         for i in rays:
             for j in elements:
@@ -82,15 +95,23 @@ class RayBundle:
                 j.propagate_ray(i)
     
     def track_plot(self):
+        """
+        Creates and returns a plot of ray paths in the y-z plane.
+        """
         rays = self.rays()
         for i in rays:
             vertices = i.vertices()
             z = [point[2] for point in vertices]
             y = [point[1] for point in vertices]
             plt.plot(z, y)
+        plt.xlabel("z position (mm)")
+        plt.ylabel("y position (mm)")
         return plt.gcf() #get current figure
     
     def rms(self):
+        """
+        Calculates the spread of the ray bundle at the current position or the radius of the concentric rings.
+        """
         #how to get where ray intersects the screen?
         rays = self.rays()
         x0 = 0
@@ -115,6 +136,9 @@ class RayBundle:
         return rms
     
     def spot_plot(self): #plots the output x-y view of the screen
+        """
+        Creates a plot of when the ray bundles hit the screen. Returns an x-y plane positions of the rays.
+        """
         plt.figure() #to prevent graphs from being plotted on top of each other
 
         rays = self.rays()
@@ -123,7 +147,8 @@ class RayBundle:
             x = final_pos[0]
             y = final_pos[1]
             plt.scatter(x,y) #creates a scatter plot with non-connected points
-        
+        plt.xlabel("x position (mm)")
+        plt.ylabel("y position (mm)")
         return plt.gcf()
 
 

@@ -37,6 +37,7 @@ def task8():
 
 @SaveOutput("task10")
 def task10():
+    plt.figure()
     """
     Task 10.
 
@@ -67,6 +68,7 @@ def task10():
 
         plt.plot(z, y)
 
+    plt.title("Track Plot of Rays Through a Refracting Surface")
     plt.xlabel("Ray travelling in z-direction")
     plt.ylabel("y-direction")
     return plt.gcf()
@@ -74,6 +76,7 @@ def task10():
 
 @SaveOutput("task11", plot_output_indices=itemgetter(0))
 def task11():
+    plt.figure()
     """
     Task 11.
 
@@ -96,26 +99,27 @@ def task11():
 
     surface = SphericalRefraction(100, 34, 0.03, 1, 1.5) #given values in the task
 
-    screen = OutputPlane(250)
-
-    z = []
-    y = []
+    screen = OutputPlane(surface.focal_point())
 
     for i in rays:
         surface.propagate_ray(i)
         screen.propagate_ray(i)
         vertices = i.vertices()
-        z.append([point[2] for point in vertices]) #plot z-direction the direction of ray travel on x-axis in the plot
-        y.append([point[1] for point in vertices])
+        z = [point[2] for point in vertices] #plot z-direction the direction of ray travel on x-axis in the plot
+        y = [point[1] for point in vertices]
     
-    plt.plot(z, y)
-    plt.title("Ray path of 3 rays")
+        plt.plot(z, y)
+    
+    plt.title("Paraxial Ray Plot for Focal Point Determination")
+    plt.xlabel("z position (mm)")
+    plt.ylabel("y position (mm)")
 
     return plt.gcf(), surface.focal_point()
 
 
 @SaveOutput("task12")
 def task12():
+    plt.figure()
     """
     Task 12.
 
@@ -134,13 +138,17 @@ def task12():
     screen = OutputPlane(250)
 
     rb.propagate_bundle([surface, screen]) #the refracting elements are surface and the screen
-
+    
+    plt.title("Ray Bundle Track Plot")
+    plt.xlabel("z position (mm)")
+    plt.ylabel("y position (mm)")
     return rb.track_plot()
 
 
 
 @SaveOutput("task13", plot_output_indices=itemgetter(0))
 def task13():
+    plt.figure()
     """
     Task 13.
 
@@ -167,11 +175,15 @@ def task13():
 
     rms_point = rb.rms()
     
-    return rb.spot_plot(), rms_point
+    fig1 = rb.spot_plot()
+    plt.title("Spot Plot at the Focal Point Screen")
+
+    return fig1, rms_point
 
 
 @SaveOutput("task14", plot_output_indices=itemgetter(0))
 def task14():
+    plt.figure()
     """
     Task 14.
 
@@ -212,6 +224,7 @@ def task14():
     aperture_2_5 = 2 * 2 * 2.5
     diff_2_5 = wavelength * focal_point / aperture_2_5
     
+    plt.title("RMS Spot Size and Diffraction Scale vs. Input Beam Radius")
     plt.plot(radii, rms_values, label ="RMS value")
     plt.plot(radii, diff_values, label = "Diffraction scale")
     plt.xlabel("Input beam radius (mm)")
@@ -225,6 +238,7 @@ def task14():
 
 @SaveOutput(["task15a", "task15b"], plot_output_indices=itemgetter(0, 2))
 def task15():
+    plt.figure()
     """
     Task 15.
 
@@ -259,13 +273,20 @@ def task15():
     print("CP focal:", focal_point_cp)
 
     print(rb_1.rays()[0].vertices())
-    print(rb_2.rays()[0].vertices())    
+    print(rb_2.rays()[0].vertices()) 
 
-    return rb_1.spot_plot(), focal_point_pc, rb_2.spot_plot(), focal_point_cp
+    fig1 =  rb_1.spot_plot()
+    plt.title("Spot Diagram for Plano-Convex Lens")
+
+    fig2 = rb_2.spot_plot()
+    plt.title("Spot Diagram for Convex-Plano Lens")
+
+    return fig1, focal_point_pc, fig2, focal_point_cp
 
 
 @SaveOutput("task16", plot_output_indices=itemgetter(0))
 def task16():
+    plt.figure()
     """
     Task 16.
 
@@ -323,6 +344,7 @@ def task16():
     aperture = 2 * 3.5
     diff_3_5 = wavelength * (focal_point_pc - 105.) / aperture #the effective focal length is measured from the rear end of the lens therefore 5 mm thickness and z_0 at 100 results in 105. mm
     
+    plt.title("RMS Spot Size and Diffraction Scale for PlanoConvex and ConvexPlano Lenses")
     plt.plot(radii, rms_pc, label ="RMS value plano convex")
     #plt.plot(radii, diff_val_pc, label = "Diffraction scale plano convex")
     plt.plot(radii, rms_cp, label ="RMS value convex plano")
@@ -341,6 +363,7 @@ def task16():
 @SaveOutput("task17", plot_output_indices=itemgetter(0))
 def task17():
     from scipy.optimize import minimize
+    plt.figure()
     """
     Task 17.
 
@@ -386,6 +409,7 @@ def task17():
     for ray in rb_bil.rays():
         final_pos = ray.vertices()[-1]
         plt.scatter(final_pos[0], final_pos[1], label="BiConvex", color = "red")
+    plt.title("Comparison of Plano-Convex and Bi-Convex Spot Plots")
     plt.xlabel("x position (mm)")
     plt.ylabel("y position (mm)")
 
@@ -394,6 +418,7 @@ def task17():
 
 @SaveOutput("task18", plot_output_indices=itemgetter(0))
 def task18():
+    plt.figure()
     """
     Task 18.
 
@@ -412,11 +437,14 @@ def task18():
     rb.propagate_bundle([sph_refl, screen])
     focal_point = sph_refl.focal_point()
 
-    return rb.spot_plot(), focal_point
+    fig = rb.spot_plot()
+    plt.title("Spot Plot for Spherical Reflection")
+    return fig, focal_point
 
 
 @SaveOutput(["task19a", "task19b"])
 def task19():
+    plt.figure()
     """
     Task 19.
 
@@ -451,11 +479,13 @@ def task19():
             r.append(r_add)
     
     fig1 = plt.figure()
+    plt.title("Transverse Spherical Aberration")
     plt.plot(radii, rms_pc)
     plt.xlabel("Input beam radius (mm)")
     plt.ylabel("RMS spot size (mm)")
     
     fig2 = plt.figure()
+    plt.title("Longitudinal Spherical Aberration")
     plt.scatter(r, z_intercept)
     plt.axhline(focal_point_pc)
     plt.xlabel("Transverse distance from optical axis (mm)")
@@ -466,6 +496,7 @@ def task19():
 
 @SaveOutput("task20")
 def task20():
+    plt.figure()
     """
     Task 20.
 
@@ -490,8 +521,10 @@ def task20():
 
         plt.plot(z, x)
 
+        plt.title("Dispersion of Light Through BK7 Bi-Convex Lens")
         plt.xlabel("z (mm)")
         plt.ylabel("x (mm)")
+        
 
     return plt.gcf()
 
@@ -499,38 +532,38 @@ def task20():
 if __name__ == "__main__":
 
     # Run task 8 function
-    #task8()
+    task8()
 
     # Run task 10 function
-    #FIG10 = task10()
+    FIG10 = task10()
 
     # Run task 11 function
-    #FIG11, FOCAL_POINT = task11()
+    FIG11, FOCAL_POINT = task11()
 
     # Run task 12 function
-    #FIG12 = task12()
+    FIG12 = task12()
 
     # Run task 13 function
-    #FIG13, TASK13_RMS = task13()
+    FIG13, TASK13_RMS = task13()
 
     # Run task 14 function
-    #FIG14, TASK14_RMS, TASK14_DIFF_SCALE = task14()
+    FIG14, TASK14_RMS, TASK14_DIFF_SCALE = task14()
 
     # Run task 15 function
-    #FIG15_PC, FOCAL_POINT_PC, FIG15_CP, FOCAL_POINT_CP = task15()
+    FIG15_PC, FOCAL_POINT_PC, FIG15_CP, FOCAL_POINT_CP = task15()
 
     # Run task 16 function
-    task16()
-    #FIG16, PC_RMS, CP_RMS, TASK16_DIFF_SCALE = task16()
+    #task16()
+    FIG16, PC_RMS, CP_RMS, TASK16_DIFF_SCALE = task16()
 
     # Run task 17 function
-    #FIG17, CP_RMS, BICONVEX_RMS = task17()
+    FIG17, CP_RMS, BICONVEX_RMS = task17()
 
     # Run task 18 function
-    #FIG18, FOCAL_POINT = task18()
+    FIG18, FOCAL_POINT = task18()
 
     # Run task 19 function
-    #FIG19_TVSA, FIG19_LGSA = task19()
+    FIG19_TVSA, FIG19_LGSA = task19()
 
     # Run task 20 function
     FIG20 = task20()
