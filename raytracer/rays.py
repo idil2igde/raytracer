@@ -1,3 +1,4 @@
+"""Module containint Ray and RayBundle classes"""
 import numpy as np
 #from raytracer.elements import OpticalElement
 import matplotlib.pyplot as plt
@@ -5,11 +6,25 @@ import matplotlib.pyplot as plt
 
 class Ray:
     def __init__(self, pos = np.array([0, 0, 0]), direc = np.array([0, 0, 1]), wavelength = 588e-9):
-        self.__pos = pos #the current position of the ray / a point in space
-        self.__direc = direc #the current direction of the ray
+        self.__pos =self._check_vector(pos) #the current position of the ray / a point in space
+        self.__direc = self._normalise(self._check_vector(direc)) #the current direction of the ray
         self.__vertices = [self.__pos] #all the points (positions) the ray passes through
         self.__wavelength = wavelength
         #brackets to create a list out of array
+    #check if position and direction are vectors or not
+    def _check_vector(self, vec):
+        if not isinstance(vec, (list, np.ndarray)):
+            raise Exception("Vector must be a list or a numpy array")
+        arr = np.array(vec, dtype = float)
+        if arr.shape !=(3,):
+            raise Exception("Vector must have length 3")
+        return arr
+    
+    def _normalise(self, vec):
+        norm = np.linalg.norm(vec)
+        if norm == 0:
+            raise Exception("Direction vector cannot be zero")
+        return vec / norm
     #access methods
     def pos(self):
         return self.__pos
@@ -19,8 +34,8 @@ class Ray:
         return self.__wavelength
     def append(self, pos, direc):
         #adding new points along the ray in 3D
-        self.__pos = np.array(pos)
-        self.__direc = np.array(direc)
+        self.__pos = self._check_vector(pos)
+        self.__direc = self._normalise(self._check_vector(direc))
         self.__vertices.append(self.__pos)
         return self
     def vertices(self):
@@ -37,7 +52,7 @@ class Ray:
         z = pos[2] + l * direc[2]
         return z
 
-class RayBundle(Ray):
+class RayBundle:
     def __init__(self, rmax = 5., nrings = 5., multi = 6): #ray bundle is a circular light beam
         self.__rmax = rmax
         self.__nrings = nrings
@@ -45,6 +60,7 @@ class RayBundle(Ray):
         self.__rays = []
 
         #we NEED to add the CENTRAL RING
+        self.__rays.append(Ray(np.array([0., 0., 0.]), np.array([0., 0., 1.])))
         for iring in range(1, int(nrings)+1): #0th ring doesn't make sense so range starts from 1
             radius = iring * rmax / nrings
             npoints = iring * multi
@@ -54,6 +70,7 @@ class RayBundle(Ray):
                 y = np.sin(theta) * radius
                 ray = Ray(np.array([x , y , 0]), np.array([0, 0, 1])) #direction is along optical axis and z start position is 0
                 self.__rays.append(ray) #create a ray list of spherical coordinates
+        
 
     def rays(self):
         return self.__rays

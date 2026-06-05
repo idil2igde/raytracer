@@ -12,8 +12,44 @@ class OpticalElement:
                 #tests hwo the ray propogates in the optical object and update the ray's internal characteristics such as poisiton and direction
                 raise NotImplementedError('propagate_ray() needs to be implemented in derived classes')
         
+class Surface(OpticalElement):
+        def intercept(self, ray): #where the ray intercepts the spherical surface
+                direc = ray.direc()
+                pos = ray.pos()
+                curv = self.curvature()
+                if curv == 0:
+                        z_init = ray.pos()[2]
+                        z_direc = ray.direc()[2]
+                        if z_direc == 0: #if the ray is moving parallel to the plane
+                                return None
+                        l = (self.z_0() - z_init) / z_direc #distance travelled in ray direction before ray hits the plane
+                        if l < 0: # if the surface is behind the ray
+                                return None
+                        return pos + l * direc #position where the ray hits the plane
+                rad = 1 / curv #since the unit of curvature is mm-1, radius is inverse
+                z0 = self.z_0()
+                centre = np.array([0, 0, z0 + rad]) #centre of sphere is calculated by adding where surface crosses the z-axis and the radius of the sphere
+                r = pos - centre #position of ray relative to the sphere centre
+                dot_1 = np.dot(r, direc)
+                disc = dot_1 * dot_1 - (np.dot(r, r) - rad * rad)
+                if disc < 0:
+                        return None #no real solutions to quad formula exists for negative discriminant
+                l1 = - dot_1 + np.sqrt(disc)
+                l2 = - dot_1 - np.sqrt(disc)
+                valid = [] 
+                for l in [l1, l2]:
+                        if l > 0: #ray travelling forward
+                                point = pos + l * direc #where the ray strikes the physical surface
+                                radial_distance = np.sqrt(point[0]**2 + point[1]**2) #Pythagoras' theorem
+                                if radial_distance <= self.aperture(): #if the ray hits the spherical point beyond the space aperture is filling
+                                        valid.append(point)
+                if len(valid) == 0:
+                        return None #if there are no valid points for both roots
+                intercept_pos = min(valid, key = lambda point: np.dot(point - pos, direc)) #if both roots are valid, detecting the ray that hits the surface first
 
-class SphericalRefraction(OpticalElement):
+                return intercept_pos
+
+class SphericalRefraction(Surface):
         def __init__(self, z_0 = 0., aperture = 0., curvature = 0., n_1 = 0., n_2 = 0.):
                 self.__z0 = z_0
                 #where surface intercepts optical axis (z-axis)
@@ -39,41 +75,7 @@ class SphericalRefraction(OpticalElement):
                         return self.__n2
                 return self.__n2.ref_index(wavelength)
         
-        def intercept(self, ray): #where the ray intercepts the spherical surface
-                direc = ray.direc()
-                pos = ray.pos()
-                curv = self.curvature()
-                if curv == 0:
-                        z_init = ray.pos()[2]
-                        z_direc = ray.direc()[2]
-                        if z_direc == 0: #if the ray is moving parallel to the plane
-                                return None
-                        l = (self.__z0 - z_init) / z_direc #distance travelled in ray direction before ray hits the plane
-                        if l < 0: # if the surface is behind the ray
-                                return None
-                        return pos + l * direc #position where the ray hits the plane
-                rad = 1 / curv #since the unit of curvature is mm-1, radius is inverse
-                z0 = self.z_0()
-                centre = np.array([0, 0, z0 + rad]) #centre of sphere is calculated by adding where surface crosses the z-axis and the radius of the sphere
-                r = pos - centre #position of ray relative to the sphere centre
-                dot_1 = np.dot(r, direc)
-                disc = dot_1 * dot_1 - (np.dot(r, r) - rad * rad)
-                if disc < 0:
-                        return None #no real solutions to quad formula exists for negative discriminant
-                l1 = - dot_1 + np.sqrt(disc)
-                l2 = - dot_1 - np.sqrt(disc)
-                valid = [] 
-                for l in [l1, l2]:
-                        if l > 0: #ray travelling forward
-                                point = pos + l * direc #where the ray strikes the physical surface
-                                radial_distance = np.sqrt(point[0]**2 + point[1]**2) #Pythagoras' theorem
-                                if radial_distance <= self.__aperture: #if the ray hits the spherical point beyond the space aperture is filling
-                                        valid.append(point)
-                if len(valid) == 0:
-                        return None #if there are no valid points for both roots
-                intercept_pos = min(valid, key = lambda point: np.dot(point - pos, direc)) #if both roots are valid, detecting the ray that hits the surface first
 
-                return intercept_pos
         
         def propagate_ray(self, ray): #trace the ray until intercept
                 direc = ray.direc()
@@ -103,7 +105,7 @@ class SphericalRefraction(OpticalElement):
                 ray.append(new_pos, new_direc)
                 return ray
                 
-        def focal_point(self, wavelength): #calculating the focal point of a refracting spherical surface
+        def focal_point(self, wavelength = None): #calculating the focal point of a refracting spherical surface
                 n1 = self.n_1(wavelength)
                 n2 = self.n_2(wavelength)
                 rad = 1 / self.curvature()
@@ -111,12 +113,9 @@ class SphericalRefraction(OpticalElement):
                 z0 = self.z_0()
                 return focal_point + z0
 
-class OutputPlane(OpticalElement):
-        def __init__(self, z_0):
-                self.__z0 = z_0
-        
+class Plane(OpticalElement):
         def intercept(self, ray):
-                z_0 = self.__z0 #where the plane is in z-direction
+                z_0 = self.z_0() #where the plane is in z-direction
                 z_init = ray.pos()[2]
                 z_direc = ray.direc()[2]
                 if z_direc == 0: #if the ray is moving parallel to the plane
@@ -128,6 +127,13 @@ class OutputPlane(OpticalElement):
                 pos = ray.pos()
                 intercept_pos = pos + l * direc
                 return intercept_pos
+
+class OutputPlane(Plane):
+        def __init__(self, z_0):
+                self.__z0 = z_0
+        
+        def z_0(self):
+                return self.__z0
         
         def propagate_ray(self, ray):
                 new_pos = self.intercept(ray)
@@ -163,7 +169,7 @@ class SphericalReflection(SphericalRefraction): #since reflection class has exac
                         return None
                 ray.append(new_pos, new_direc)
                 return ray
-        def focal_point(self):
+        def focal_point(self, wavelength = None):
                 curv = self.curvature()
                 rad = 1 / curv
                 focal_point = rad / 2 #focal point equation for spherical mirrors

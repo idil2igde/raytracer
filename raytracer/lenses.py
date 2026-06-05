@@ -27,7 +27,10 @@ class PlanoConvex:
         z_focus = pos[2] + l * direc[2] #returns the z poisiton of the focal length
 
         return z_focus
-            
+    
+class ConvexPlano(OpticalElement):
+     pass
+
 class BiConvex:
     def __init__(self, z_0 = 100, curvature1 = 0.02, curvature2 = -0.02, n_inside = 1.5168, n_outside = 1., thickness = 5., aperture = 50.):
             self.__z_0 = z_0

@@ -96,17 +96,20 @@ def task11():
 
     screen = OutputPlane(250)
 
+    z = []
+    y = []
+
     for i in rays:
         surface.propagate_ray(i)
         screen.propagate_ray(i)
         vertices = i.vertices()
-        z = [point[2] for point in vertices] #plot z-direction the direction of ray travel on x-axis in the plot
-        y = [point[1] for point in vertices]
-        plt.plot(z, y)
-        print(surface.focal_point())
-        #NEEDS TO RETURN TUPLE!!
+        z.append([point[2] for point in vertices]) #plot z-direction the direction of ray travel on x-axis in the plot
+        y.append([point[1] for point in vertices])
+    
+    plt.plot(z, y)
+    plt.title("Ray path of 3 rays")
 
-    return
+    return plt.gcf(), surface.focal_point()
 
 
 @SaveOutput("task12")
@@ -490,7 +493,7 @@ if __name__ == "__main__":
 
     # Run task 11 function
     #task11()
-    #FIG11, FOCAL_POINT = task11()
+    FIG11, FOCAL_POINT = task11()
 
     # Run task 12 function
     #FIG12 = task12()
